@@ -1,0 +1,208 @@
+#
+#	Addaptic's CI. The engine built by GCC on Linux and by MSVC on
+#	Windows, every gate run against each, and the suite run again under
+#	AddressSanitizer and UBSan on Linux -- Rich's three choices, made on
+#	2026-10-17. The checks themselves are ci/checks.sh, one script every
+#	job runs, so that no platform's copy of them can drift.
+#
+#	GCC and libstdc++ are a compiler and a library Addaptic had never met
+#	before this. A second platform is a test of its own: Elzed's arcsine
+#	answered a complex number on macOS and a real one on Windows for
+#	years, and only a second standard library showed it. macOS is left
+#	out on purpose -- every change is built and checked there by hand.
+#
+#	Performance is never measured here: shared runners are far noisier
+#	than anything worth reading.
+#
+#	MSVC's AddressSanitizer is msvc-asan.yml, weekly and by hand rather
+#	than on every push -- see there for why.
+#
+#	This organization restricts Actions to 'local_only', so no external
+#	action -- not even actions/checkout -- may be used. Everything here is
+#	plain git, cmake and bash on purpose. Do not "simplify" it back to
+#	actions/checkout; it will fail policy. Elzed's workflow learned this
+#	first.
+#
+
+name: CI
+
+on:
+  push:
+    #	EVERY branch, deliberately -- Elzed's Windows job learned this twice.
+    #	A narrower rule has to be kept in step with how branches are named,
+    #	and when it is not, a job that does not run looks exactly like a job
+    #	that passed. The paths filter is what keeps the cost down: a push
+    #	touching none of the code, the checks or this file runs nothing, so
+    #	the README and docs/ cost no minutes.
+    branches:
+      - '**'
+    paths:
+      - '*.cpp'
+      - '*.h'
+      - 'CMakeLists.txt'
+      - 'auditrounding.py'
+      - 'ci/**'
+      - '.github/workflows/ci.yml'
+
+  workflow_dispatch:
+
+jobs:
+  linux-gcc:
+    name: Linux (GCC)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      #	The organization allows only 'local_only' actions, so plain git
+      #	does what actions/checkout would, with the token the runner is
+      #	given anyway...
+      - name: Check out
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+          git log --oneline -1
+
+      - name: Report toolchain
+        shell: bash
+        run: |
+          g++ --version | head -1
+          cmake --version | head -1
+          python3 --version
+
+      - name: Configure
+        shell: bash
+        run: cmake -S . -B build/ci -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_COMPILER=g++
+
+      - name: Build
+        id: build
+        shell: bash
+        run: cmake --build build/ci --parallel 4 2>&1 | tee build/ci-build.log
+
+      - name: Checks
+        shell: bash
+        timeout-minutes: 15
+        run: bash ci/checks.sh build/ci
+
+      #	Every warning listed, and any at all fails the job -- see
+      #	ci/warnings.sh. Last, and whenever the build itself succeeded,
+      #	so that a warning never hides what the checks found, nor they it.
+      - name: Warnings
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: bash ci/warnings.sh build/ci-build.log
+
+  windows-msvc:
+    name: Windows (MSVC x64)
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+          git log --oneline -1
+
+      - name: Report toolchain
+        shell: bash
+        run: |
+          cmake --version | head -1
+          python --version
+
+      - name: Configure
+        shell: cmd
+        run: cmake -S . -B build/ci -A x64
+
+      - name: Build
+        id: build
+        shell: bash
+        run: cmake --build build/ci --config Release --parallel 4 2>&1 | tee build/ci-build.log
+
+      #	The same script under the runner's Git Bash. Line endings are LF
+      #	in the working tree on every platform -- see .gitattributes -- and
+      #	the script strips the CR a Windows program prints before it
+      #	compares the calibration.
+      - name: Checks
+        shell: bash
+        timeout-minutes: 15
+        run: bash ci/checks.sh build/ci/Release
+
+      #	Every warning listed, and any at all fails the job -- see
+      #	ci/warnings.sh. Last, and whenever the build itself succeeded,
+      #	so that a warning never hides what the checks found, nor they it.
+      - name: Warnings
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: bash ci/warnings.sh build/ci-build.log
+
+  linux-sanitizers:
+    name: Linux (Clang, ASan + UBSan)
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+
+    #	The suite and the sweep cannot see a stray read or write into the
+    #	slack a digits array is calloc'd with; this can. **And this is the
+    #	only place leaks are looked for.** macOS's ASan cannot -- it aborts
+    #	if asked, which is why the CMake file's ASan option turns
+    #	detect_leaks off -- and TestNothingLeftBehind counts what is made
+    #	with new, not the digits. Linux's LeakSanitizer is left on, as ASan
+    #	has it by default there; memory a cache still holds at exit is
+    #	reachable and not reported.
+    env:
+      ASAN_OPTIONS: abort_on_error=1
+      UBSAN_OPTIONS: print_stacktrace=1:halt_on_error=1
+
+    steps:
+      - name: Check out
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+          git log --oneline -1
+
+      - name: Report toolchain
+        shell: bash
+        run: |
+          clang++ --version | head -1
+          cmake --version | head -1
+
+      #	The flags the local san.sh has always used: -O1 -g, every
+      #	sanitizer report fatal. No build type, so nothing is added to them.
+      - name: Configure
+        shell: bash
+        run: |
+          flags="-O1 -g -fsanitize=address,undefined -fno-sanitize-recover=all -fno-omit-frame-pointer"
+          cmake -S . -B build/san -DCMAKE_CXX_COMPILER=clang++ \
+                -DCMAKE_CXX_FLAGS="$flags" -DCMAKE_EXE_LINKER_FLAGS="$flags"
+
+      - name: Build
+        id: build
+        shell: bash
+        run: cmake --build build/san --parallel 4 --target AddapticTests AddapticSweep AddapticThreads auditrounding 2>&1 | tee build/san-build.log
+
+      - name: Checks, sanitized
+        shell: bash
+        timeout-minutes: 30
+        run: bash ci/checks.sh build/san --sanitized
+
+      #	Every warning listed, and any at all fails the job -- see
+      #	ci/warnings.sh. Last, and whenever the build itself succeeded,
+      #	so that a warning never hides what the checks found, nor they it.
+      - name: Warnings
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: bash ci/warnings.sh build/san-build.log

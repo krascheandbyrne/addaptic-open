@@ -1,0 +1,17 @@
+# Line endings.
+#
+# Every text file is stored LF in the repository and checked out LF on
+# every platform. Git still detects binary content for itself and
+# leaves it alone, so this stays correct if one is ever added.
+#
+# The eol=lf half is the part that does the work. text=auto alone
+# normalises what is stored but checks out whatever the platform
+# prefers, which leaves the working tree depending on each machine's
+# core.autocrlf -- and a working tree that disagreed with the rest of
+# the sources is what this is here to prevent. Addaptic.cpp arrived
+# CRLF in the 2024 check-in, from the Windows era this repository
+# still shows in its .gitignore, and sat that way unnoticed among
+# twelve LF files until git diff --check started reporting every line
+# of it as trailing whitespace.
+
+* text=auto eol=lf

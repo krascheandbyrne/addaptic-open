@@ -1,0 +1,106 @@
+#
+#	The suite, the sweep and the threads gate under MSVC's
+#	AddressSanitizer, on Windows. Weekly and by hand, not on every push --
+#	Rich's call, 2026-10-17: the job takes about four minutes, and on
+#	every push it would double CI's time. Linux's ASan runs on every push
+#	in ci.yml and finds nearly every memory fault this would; what this
+#	adds is MSVC's own code, and a 32-bit long, where a size or an index
+#	can overflow that never does on the other two. MSVC has no UBSan and
+#	no leak checking.
+#
+#	Run it by hand from the Actions tab, or with
+#
+#		gh workflow run msvc-asan.yml
+#
+#	before a release, or after a change to how sizes or digit arrays are
+#	worked out. A scheduled run reports like any other: red on main means
+#	look.
+#
+#	The organization allows only 'local_only' actions, so the checkout is
+#	plain git, as in ci.yml -- do not reach for actions/checkout.
+#
+
+name: MSVC ASan
+
+on:
+  schedule:
+    #	Mondays at 06:00 UTC. A schedule runs on the default branch only.
+    - cron: '0 6 * * 1'
+
+  workflow_dispatch:
+
+jobs:
+  windows-msvc-asan:
+    name: Windows (MSVC x64, ASan)
+    runs-on: windows-latest
+    timeout-minutes: 40
+
+    steps:
+      - name: Check out
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git init -q .
+          git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          git -c protocol.version=2 fetch -q --depth 1 origin "${GITHUB_SHA}"
+          git checkout -q FETCH_HEAD
+          git log --oneline -1
+
+      #	The CMake file's own option -- see there for what MSVC needs.
+      - name: Configure
+        shell: cmd
+        run: cmake -S . -B build/asan -A x64 -DADDAPTIC_ASAN=ON
+
+      - name: Build
+        id: build
+        shell: bash
+        run: cmake --build build/asan --config Release --parallel 4 --target AddapticTests AddapticSweep AddapticThreads auditrounding 2>&1 | tee build/asan-build.log
+
+      #	The runtime sits beside the cl.exe that compiled these, and dumpbin
+      #	with it. A Visual Studio generator records that path in
+      #	CMakeCXXCompiler.cmake, not in the cache...
+      - name: Put the ASan runtime on the PATH
+        shell: pwsh
+        run: |
+          $file = Get-ChildItem -Path build/asan/CMakeFiles -Recurse -Filter CMakeCXXCompiler.cmake | Select-Object -First 1
+          $found = Select-String -Path $file.FullName -Pattern 'set\(CMAKE_CXX_COMPILER "(.*)"\)'
+          if (-not $found) {
+            Write-Error "no compiler recorded in $($file.FullName)"
+            exit 1
+          }
+          $cl = $found.Matches[0].Groups[1].Value
+          $dir = (Split-Path $cl) -replace '/', '\'
+          if (-not (Test-Path (Join-Path $dir 'clang_rt.asan_dynamic-x86_64.dll'))) {
+            Write-Error "no ASan runtime beside $cl"
+            exit 1
+          }
+          Add-Content -Path $env:GITHUB_PATH -Value $dir
+          Write-Host "ASan runtime from $dir"
+
+      #	A sanitizer that was never linked in passes everything, so the job
+      #	fails unless each binary loads the runtime...
+      - name: Check the binaries are instrumented
+        shell: pwsh
+        run: |
+          foreach ($t in 'AddapticTests', 'AddapticSweep', 'AddapticThreads', 'auditrounding') {
+            $deps = & dumpbin /nologo /dependents "build/asan/Release/$t.exe"
+            if (-not ($deps -match 'clang_rt\.asan')) {
+              Write-Error "$t.exe does not load the ASan runtime"
+              exit 1
+            }
+            Write-Host "$t.exe loads the ASan runtime"
+          }
+
+      - name: Checks, sanitized
+        shell: bash
+        timeout-minutes: 30
+        run: bash ci/checks.sh build/asan/Release --sanitized
+
+      #	Every warning listed, and any at all fails the job -- see
+      #	ci/warnings.sh. Last, and whenever the build itself succeeded,
+      #	so that a warning never hides what the checks found, nor they it.
+      - name: Warnings
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        shell: bash
+        run: bash ci/warnings.sh build/asan-build.log

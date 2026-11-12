@@ -1,0 +1,718 @@
+<title>Every Digit It Is Given</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Serif:ital,wght@0,400;0,600;1,400&display=swap">
+<style>
+:root{
+  --ground:#EDEFF1;
+  --surface:#FFFFFF;
+  --sunken:#E4E8EB;
+  --ink:#101820;
+  --ink-soft:#4C5A67;
+  --ink-faint:#78868F;
+  --rule:#C6D0D7;
+  --rule-soft:#DCE2E7;
+  --accent:#186356;
+  --accent-deep:#0F4A40;
+  --accent-wash:#D9E8E4;
+  --flag:#8E5416;
+  --flag-wash:#F1E5D5;
+  color-scheme:light;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0E141A;
+    --surface:#141C23;
+    --sunken:#111920;
+    --ink:#DEE6EC;
+    --ink-soft:#93A2AF;
+    --ink-faint:#6C7C89;
+    --rule:#26323C;
+    --rule-soft:#1D272F;
+    --accent:#4FB8A2;
+    --accent-deep:#7FD3C1;
+    --accent-wash:#12302B;
+    --flag:#D6A263;
+    --flag-wash:#2A2016;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0E141A;
+  --surface:#141C23;
+  --sunken:#111920;
+  --ink:#DEE6EC;
+  --ink-soft:#93A2AF;
+  --ink-faint:#6C7C89;
+  --rule:#26323C;
+  --rule-soft:#1D272F;
+  --accent:#4FB8A2;
+  --accent-deep:#7FD3C1;
+  --accent-wash:#12302B;
+  --flag:#D6A263;
+  --flag-wash:#2A2016;
+  color-scheme:dark;
+}
+
+*{box-sizing:border-box}
+body{
+  background:var(--ground);
+  color:var(--ink);
+  font-family:"IBM Plex Serif","Iowan Old Style",Georgia,serif;
+  font-size:17px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---- navigation ---- */
+.topbar{
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--ground) 88%,transparent);
+  backdrop-filter:blur(8px);
+  border-bottom:1px solid var(--rule);
+}
+.topbar-in{
+  max-width:1120px;margin:0 auto;padding:.7rem 1.25rem;
+  display:flex;align-items:baseline;gap:1.5rem;flex-wrap:wrap;
+}
+.topbar .mark{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.72rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);font-weight:500;
+}
+.topbar nav{display:flex;gap:1.1rem;margin-left:auto;flex-wrap:wrap}
+.topbar nav a{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.78rem;letter-spacing:.02em;
+  color:var(--ink-soft);text-decoration:none;
+  border-bottom:1px solid transparent;
+  transition:color .15s ease,border-color .15s ease;
+}
+.topbar nav a:hover{color:var(--ink);border-bottom-color:var(--accent)}
+a:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:2px}
+
+/* ---- document grid ---- */
+.doc{
+  display:grid;
+  grid-template-columns:
+    [full-start] minmax(1.25rem,1fr)
+    [wide-start] minmax(0,150px)
+    [text-start] minmax(0,68ch)
+    [text-end] minmax(0,150px)
+    [wide-end] minmax(1.25rem,1fr)
+    [full-end];
+  row-gap:0;
+  padding-bottom:4rem;
+}
+.doc > *{grid-column:text}
+.doc > .wide{grid-column:wide}
+.doc > .full{grid-column:full}
+
+/* ---- hero ---- */
+.hero{padding:4.5rem 0 2.75rem}
+.eyebrow{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.7rem;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--accent);margin:0 0 1.2rem;
+}
+h1{
+  font-family:"IBM Plex Serif",Georgia,serif;
+  font-weight:600;font-size:clamp(2.5rem,6vw,3.9rem);
+  line-height:1.04;letter-spacing:-.02em;margin:0;text-wrap:balance;
+}
+.standfirst{
+  font-size:1.18rem;line-height:1.55;color:var(--ink-soft);
+  margin:1.4rem 0 0;max-width:56ch;text-wrap:pretty;
+}
+.byline{
+  margin:2.2rem 0 0;padding-top:1.1rem;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.8rem;color:var(--ink-faint);
+  display:flex;gap:1.6rem;flex-wrap:wrap;
+}
+.byline b{color:var(--ink-soft);font-weight:500}
+
+/* ---- digit strip motif ---- */
+.strip-wrap{margin:2.6rem 0 0}
+.strip{
+  display:flex;gap:3px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(90deg,#000 62%,transparent 99%);
+  mask-image:linear-gradient(90deg,#000 62%,transparent 99%);
+}
+.cell{
+  flex:0 0 auto;width:34px;height:44px;
+  display:grid;place-items:center;
+  background:var(--surface);border:1px solid var(--rule);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:1.05rem;color:var(--ink);
+}
+.cell.mark{background:var(--accent-wash);border-color:var(--accent);color:var(--accent-deep);font-weight:500}
+.strip-note{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.76rem;color:var(--ink-faint);margin:.7rem 0 0;
+}
+
+/* ---- part openers ---- */
+.part{
+  margin:5rem 0 0;padding:2rem 0 0;
+  border-top:2px solid var(--ink);
+  display:flex;align-items:baseline;gap:1.4rem;
+}
+.part .num{
+  font-family:"IBM Plex Serif",Georgia,serif;
+  font-size:2.6rem;line-height:1;font-weight:600;color:var(--accent);
+  font-variant-numeric:tabular-nums;
+}
+.part h2{
+  font-family:"IBM Plex Serif",Georgia,serif;
+  font-size:1.85rem;line-height:1.15;font-weight:600;letter-spacing:-.015em;
+  margin:0;text-wrap:balance;
+}
+.part .kicker{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.72rem;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--ink-faint);display:block;margin-bottom:.45rem;
+}
+
+h3{
+  font-family:"IBM Plex Serif",Georgia,serif;
+  font-size:1.28rem;font-weight:600;line-height:1.25;letter-spacing:-.01em;
+  margin:2.9rem 0 .2rem;text-wrap:balance;
+}
+h4{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.78rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--ink-faint);margin:2.2rem 0 .6rem;
+}
+p{margin:1.05rem 0 0;text-wrap:pretty}
+.lede{font-size:1.06rem;color:var(--ink-soft)}
+strong{font-weight:600;color:var(--ink)}
+em{font-style:italic}
+code{
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+  font-size:.86em;
+  background:var(--sunken);
+  padding:.1em .34em;border-radius:3px;
+  border:1px solid var(--rule-soft);
+}
+a.ref{color:var(--accent);text-decoration:none;border-bottom:1px solid var(--accent-wash)}
+a.ref:hover{border-bottom-color:var(--accent)}
+
+ul,ol{margin:1.05rem 0 0;padding-left:1.3rem}
+li{margin:.55rem 0}
+li::marker{color:var(--accent)}
+
+/* ---- tables ---- */
+.tbl{margin:1.8rem 0 .4rem;overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:.9rem}
+caption{
+  caption-side:bottom;text-align:left;
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.76rem;color:var(--ink-faint);padding-top:.7rem;
+}
+th{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.7rem;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--ink-faint);text-align:left;
+  padding:0 1.1rem .55rem 0;border-bottom:1px solid var(--ink);
+  white-space:nowrap;
+}
+td{
+  padding:.72rem 1.1rem .72rem 0;
+  border-bottom:1px solid var(--rule-soft);
+  vertical-align:top;
+}
+td:first-child{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-weight:600;font-size:.85rem;white-space:nowrap;
+}
+td code{font-size:.82em}
+tbody tr:last-child td{border-bottom:1px solid var(--rule)}
+
+/* ---- code ---- */
+pre{
+  margin:1.5rem 0 0;padding:1.1rem 1.25rem;
+  background:var(--sunken);
+  border:1px solid var(--rule-soft);
+  border-left:3px solid var(--accent);
+  overflow-x:auto;
+}
+pre code{
+  background:none;border:none;padding:0;
+  font-size:.82rem;line-height:1.62;
+  color:var(--ink);
+  font-family:"IBM Plex Mono",ui-monospace,monospace;
+}
+.cmt{color:var(--ink-faint);font-style:italic}
+
+/* ---- callouts ---- */
+.flagbox{
+  margin:2rem 0 0;padding:1.1rem 1.35rem;
+  background:var(--flag-wash);
+  border-left:3px solid var(--flag);
+}
+.flagbox .tag{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.68rem;font-weight:600;letter-spacing:.15em;text-transform:uppercase;
+  color:var(--flag);display:block;margin-bottom:.4rem;
+}
+.flagbox p{margin:0;font-size:.96rem}
+.flagbox p + p{margin-top:.7rem}
+
+/* ---- figures ---- */
+figure{
+  margin:2.6rem 0 0;padding:1.5rem 1.5rem 1.2rem;
+  background:var(--surface);border:1px solid var(--rule);
+}
+figure svg{display:block;width:100%;height:auto;color:var(--ink-soft)}
+figcaption{
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.79rem;line-height:1.5;color:var(--ink-faint);
+  margin-top:1rem;padding-top:.8rem;border-top:1px solid var(--rule-soft);
+}
+figcaption b{color:var(--ink-soft);font-weight:600}
+
+/* ---- verdict ---- */
+.verdict{
+  margin:3rem 0 0;padding:2rem 0 0;border-top:2px solid var(--accent);
+}
+.verdict p{font-size:1.1rem}
+
+footer{
+  margin-top:4.5rem;padding-top:1.4rem;border-top:1px solid var(--rule);
+  font-family:"IBM Plex Sans",system-ui,sans-serif;
+  font-size:.76rem;color:var(--ink-faint);line-height:1.65;
+}
+
+@media (max-width:720px){
+  body{font-size:16px}
+  .hero{padding:3rem 0 2rem}
+  .part{flex-direction:column;gap:.6rem;margin-top:3.6rem}
+  .part .num{font-size:1.9rem}
+  figure{padding:1rem .9rem}
+}
+@media (prefers-reduced-motion:reduce){
+  *{transition:none!important;animation:none!important}
+}
+</style>
+
+<div class="topbar">
+  <div class="topbar-in">
+    <span class="mark">Every digit it is given</span>
+    <nav>
+      <a href="#part1">I · The approaches</a>
+      <a href="#part2">II · In C++</a>
+      <a href="#part3">III · Addaptic</a>
+    </nav>
+  </div>
+</div>
+
+<article class="doc">
+
+  <header class="hero">
+    <p class="eyebrow">Technical survey · September 2026</p>
+    <h1>Every Digit It Is Given</h1>
+    <p class="standfirst">How arbitrary-precision arithmetic actually gets built — the design axes, the C++ mechanics that follow from them, and one worked example of the choices in combination.</p>
+    <div class="strip-wrap">
+      <div class="strip" aria-hidden="true">
+        <span class="cell">3</span><span class="cell mark">.</span><span class="cell">1</span><span class="cell">4</span><span class="cell">1</span><span class="cell">5</span><span class="cell">9</span><span class="cell">2</span><span class="cell">6</span><span class="cell">5</span><span class="cell">3</span><span class="cell">5</span><span class="cell">8</span><span class="cell">9</span><span class="cell">7</span><span class="cell">9</span><span class="cell">3</span><span class="cell">2</span><span class="cell">3</span><span class="cell">8</span><span class="cell">4</span><span class="cell">6</span><span class="cell">2</span><span class="cell">6</span><span class="cell">4</span><span class="cell">3</span><span class="cell">3</span><span class="cell">8</span><span class="cell">3</span><span class="cell">2</span><span class="cell">7</span><span class="cell">9</span>
+      </div>
+      <p class="strip-note">One digit, one cell, for as many cells as you ask for. Everything below is a consequence of taking that literally.</p>
+    </div>
+    <p class="byline">
+      <span><b>Three parts.</b> Survey, then language, then placement.</span>
+      <span>Written for engineers choosing between, or building, one of these.</span>
+    </p>
+  </header>
+
+  <!-- ============ PART I ============ -->
+  <div class="part" id="part1">
+    <span class="num">I</span>
+    <div><span class="kicker">The survey</span><h2>Six choices that define an engine</h2></div>
+  </div>
+
+  <p class="lede">Arbitrary-precision arithmetic isn't one technique. It's a stack of independent decisions, and most confusion about it comes from conflating the layers — arguing about algorithms when the disagreement is really about what kind of number is being represented.</p>
+
+  <h3>1 · What kind of number are you representing?</h3>
+
+  <p>Five families, and they answer different questions.</p>
+
+  <div class="tbl wide">
+    <table>
+      <thead><tr><th>Model</th><th>Represents</th><th>Fails at</th></tr></thead>
+      <tbody>
+        <tr><td>Big integer</td><td>Exact ℤ, growing as needed</td><td>No fractions at all</td></tr>
+        <tr><td>Scaled integer</td><td>Value × 10<sup>−n</sup>, with <em>n</em> tracked</td><td>Division; magnitude range</td></tr>
+        <tr><td>Arbitrary-precision float</td><td>Significand × base<sup>exp</sup>, precision per value or per context</td><td>Still inexact — rounding must be specified</td></tr>
+        <tr><td>Rational</td><td>Exact <em>p/q</em></td><td>Denominators explode; no irrationals</td></tr>
+        <tr><td>Exact real</td><td>A <em>function</em> from precision to approximation</td><td>Equality is undecidable</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Big integers — GMP's <code>mpz</code>, Java's <code>BigInteger</code>, Python's <code>int</code> — are the foundation everything else is built on. Floats (MPFR) are what scientific work wants. Scaled decimal (Java <code>BigDecimal</code>, Python <code>decimal</code>, IBM's <code>decNumber</code>) is what you want when the decimal <em>representation</em> is the ground truth: money, invoices, anything a person will check by hand.</p>
+
+  <p>Rationals are seductive and usually a trap outside computer-algebra work — a few dozen operations and the denominator is forty thousand digits. Exact reals (iRRAM, Boehm's calculator in Android) genuinely give you π to whatever precision you ask for <em>later</em>, at the price that <code>x == y</code> can loop forever.</p>
+
+  <p>A sixth model sits orthogonal to all of them. <strong>Ball arithmetic</strong> — Arb is the state of the art — carries a midpoint plus a radius, so every result reports how many of its digits are actually true. It is the only model that answers <em>"is this answer good?"</em> rather than assuming it.</p>
+
+  <h3>2 · What radix?</h3>
+
+  <p>Binary limbs (2<sup>32</sup>, 2<sup>64</sup>) win on speed: the hardware adder, the hardware multiplier and shifts-for-scaling are all free. Decimal limbs — BCD, or 10<sup>9</sup> packed per <code>uint32</code> — win on fidelity: 0.1 is exact, decimal rounding rules apply directly, and there is no conversion error at the I/O boundary.</p>
+
+  <p>The cost of decimal is real but bounded. Carry propagation needs a compare-and-subtract instead of falling out of the word width, and roughly 7% of each word goes unused. The cost of <em>binary</em> in a decimal-facing application is that base conversion moves onto the hot path — and naive base conversion is O(n²), which makes it the single most under-measured cost in bignum libraries.</p>
+
+  <p>IEEE 754-2008 standardised decimal floating point for exactly this reason, with two encodings: BID, used by Intel's library, and DPD, used by IBM hardware on z and POWER.</p>
+
+  <h3>3 · Who owns the precision?</h3>
+
+  <p>Three answers, and the choice shapes the whole API.</p>
+
+  <ul>
+    <li><strong>The value.</strong> MPFR's model: each variable carries its own precision, fixed at construction, and operations round to the destination's. Explicit, slightly tedious, impossible to get wrong by accident.</li>
+    <li><strong>The operation.</strong> A working precision passed into every call.</li>
+    <li><strong>An ambient context.</strong> Python's <code>decimal</code>, Java's <code>MathContext</code>, the IEEE decimal spec — a thread-local carrying digits, rounding mode and trap flags. Convenient, and the source of every <em>"why did it round there"</em> bug ever filed.</li>
+  </ul>
+
+  <p>A related question with no default answer: for operations whose exact result is unbounded — division, and every transcendental — <em>something</em> has to say when to stop. Multiplication is the easy case: an <em>n</em>-digit by an <em>m</em>-digit product is exactly <em>n+m</em> digits and needs no policy at all.</p>
+
+  <h3>4 · Rounding, and the dilemma underneath it</h3>
+
+  <p><em>Correctly rounded</em> means the result is the representable number nearest the true value — which requires knowing the true value well enough to break the tie. That is the <strong>Table Maker's Dilemma</strong>: for some inputs the exact result sits arbitrarily close to a halfway point, so no fixed working precision suffices to decide the rounding.</p>
+
+  <p>The practical answer is <strong>Ziv's strategy</strong>: compute at modest excess precision, test whether the rounding is decidable, and if it isn't, widen and retry. MPFR guarantees correct rounding this way for every function it exports. Most other libraries offer <em>faithful</em> rounding — within one ulp — and don't say so loudly.</p>
+
+  <p>Guard digits are the cheap version of the same idea, and the thing to know about them is that <strong>they do not compose</strong>. Two operations each carrying five guard digits do not hand you a five-guard-digit result; error growth through a series is closer to multiplicative, which is why long summations want a running error bound rather than a fixed pad.</p>
+
+  <h3>5 · The algorithm ladder</h3>
+
+  <p>Addition and subtraction are linear and boring. Everything else is a ladder, and each rung is only worth climbing past a machine-tuned crossover — GMP ships a <code>tune</code> program to find them empirically per CPU.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 900 300" role="img" aria-label="Two horizontal bars on a shared logarithmic digit-count axis, showing that a one-digit-per-element engine reaches Karatsuba at about 30 digits and a transform at about 300, while a packed 64-bit engine stays on schoolbook until roughly 600 digits and reaches an FFT only near 70,000.">
+      <defs>
+        <marker id="ar" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <polygon points="0,1 8,4 0,7" fill="currentColor"></polygon>
+        </marker>
+      </defs>
+
+      <text x="60" y="30" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="currentColor">DIGIT-ARRAY ENGINE — one digit per element</text>
+      <rect x="60"  y="44" width="196" height="34" fill="none" stroke="#186356" stroke-width="1.5"></rect>
+      <rect x="256" y="44" width="130" height="34" fill="#186356" fill-opacity="0.18" stroke="#186356" stroke-width="1.5"></rect>
+      <rect x="386" y="44" width="454" height="34" fill="#186356" fill-opacity="0.42" stroke="#186356" stroke-width="1.5"></rect>
+      <text x="158" y="66" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">schoolbook</text>
+      <text x="321" y="66" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">Karatsuba</text>
+      <text x="613" y="66" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">number-theoretic transform</text>
+      <line x1="256" y1="82" x2="256" y2="96" stroke="#186356" stroke-width="1.5"></line>
+      <line x1="386" y1="82" x2="386" y2="96" stroke="#186356" stroke-width="1.5"></line>
+      <text x="256" y="108" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle" fill="#186356">~30</text>
+      <text x="386" y="108" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle" fill="#186356">~300</text>
+
+      <text x="60" y="152" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="currentColor">PACKED BINARY ENGINE — 64-bit limbs</text>
+      <rect x="60"  y="166" width="361" height="34" fill="none" stroke="currentColor" stroke-width="1.2" opacity="0.75"></rect>
+      <rect x="421" y="166" width="78"  height="34" fill="currentColor" fill-opacity="0.10" stroke="currentColor" stroke-width="1.2" opacity="0.75"></rect>
+      <rect x="499" y="166" width="191" height="34" fill="currentColor" fill-opacity="0.18" stroke="currentColor" stroke-width="1.2" opacity="0.75"></rect>
+      <rect x="690" y="166" width="150" height="34" fill="currentColor" fill-opacity="0.30" stroke="currentColor" stroke-width="1.2" opacity="0.75"></rect>
+      <text x="240" y="188" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">schoolbook</text>
+      <text x="460" y="188" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">Karatsuba</text>
+      <text x="594" y="188" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">Toom–Cook</text>
+      <text x="765" y="188" font-family="IBM Plex Sans, sans-serif" font-size="11.5" text-anchor="middle" fill="currentColor">FFT</text>
+      <line x1="421" y1="204" x2="421" y2="216" stroke="currentColor" stroke-width="1.2"></line>
+      <text x="421" y="228" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle" fill="currentColor">~600</text>
+      <line x1="690" y1="204" x2="690" y2="216" stroke="currentColor" stroke-width="1.2"></line>
+      <text x="690" y="228" font-family="IBM Plex Mono, monospace" font-size="11" text-anchor="middle" fill="currentColor">~70k</text>
+
+      <line x1="60" y1="256" x2="852" y2="256" stroke="currentColor" stroke-width="1" marker-end="url(#ar)"></line>
+      <g font-family="IBM Plex Mono, monospace" font-size="10.5" fill="currentColor" text-anchor="middle">
+        <line x1="60"  y1="252" x2="60"  y2="260" stroke="currentColor"></line><text x="60"  y="276">1</text>
+        <line x1="190" y1="252" x2="190" y2="260" stroke="currentColor"></line><text x="190" y="276">10</text>
+        <line x1="320" y1="252" x2="320" y2="260" stroke="currentColor"></line><text x="320" y="276">100</text>
+        <line x1="450" y1="252" x2="450" y2="260" stroke="currentColor"></line><text x="450" y="276">1k</text>
+        <line x1="580" y1="252" x2="580" y2="260" stroke="currentColor"></line><text x="580" y="276">10k</text>
+        <line x1="710" y1="252" x2="710" y2="260" stroke="currentColor"></line><text x="710" y="276">100k</text>
+        <line x1="840" y1="252" x2="840" y2="260" stroke="currentColor"></line><text x="840" y="276">1M</text>
+      </g>
+      <text x="456" y="294" font-family="IBM Plex Sans, sans-serif" font-size="11" text-anchor="middle" fill="currentColor" opacity="0.8">operand length, decimal digits (logarithmic)</text>
+    </svg>
+    <figcaption><b>The same ladder, climbed at different heights.</b> Crossovers are tuned in <em>elements</em>, so both engines switch algorithms at a similar element count — but an element holding one decimal digit reaches that count at a hundredth of the value. Figures are representative tunings converted to decimal digits; the exact numbers are machine-specific and are what GMP's <code>tune</code> program exists to find.</figcaption>
+  </figure>
+
+  <p><strong>Multiplication</strong> goes schoolbook O(n²) → Karatsuba O(n<sup>1.585</sup>), crossing over around 20–40 limbs → Toom-Cook 3/4 → FFT-based: Schönhage–Strassen, a floating-point FFT, or a number-theoretic transform modulo one or more primes with CRT recombination. Harvey–van der Hoeven's O(n log n) is a theoretical result, not something you would implement.</p>
+
+  <p><strong>Division</strong> starts at Knuth's Algorithm D, with normalisation and a two-limb quotient estimate; then Burnikel–Ziegler recursive division; then Newton–Raphson on the reciprocal, which reduces division to a small constant times the cost of a multiplication. There is also <em>exact division</em> — Jebelean, or Hensel lifting — for the common case where you already know the remainder is zero; it runs low-to-high and is roughly twice as fast.</p>
+
+  <p><strong>Square root</strong> is Newton iteration, or Zimmermann's Karatsuba square root. <strong>Base conversion</strong> is the one people forget: naive is O(n²) in both directions, and the fix is divide-and-conquer against a precomputed table of powers of the target base.</p>
+
+  <p><strong>Transcendentals</strong> reduce the argument into a small range and then run a series. <strong>Binary splitting</strong> is the key trick — evaluating a rational hypergeometric series as a balanced product tree instead of a linear accumulation turns O(n²) into something fast multiplication can attack. At very high precision the <strong>AGM</strong> takes over for log and π, with quadratic convergence.</p>
+
+  <h3>6 · How much of this do you actually need?</h3>
+
+  <p>Most arbitrary-precision work lives between twenty and a thousand digits, and at that size the asymptotically fast algorithms are irrelevant. Karatsuba over schoolbook, a decent division, tight allocation and a base conversion that isn't quadratic will beat a library with an FFT and a sloppy memory model. Save the ladder for when a measurement asks for it.</p>
+
+  <!-- ============ PART II ============ -->
+  <div class="part" id="part2">
+    <span class="num">II</span>
+    <div><span class="kicker">The language</span><h2>What C++ gives you, and what it charges</h2></div>
+  </div>
+
+  <p class="lede">C++ has the tools to make a bignum feel like a built-in type, and enough rope to make it four times slower than it needs to be. The specifics divide into a structural decision, a set of ergonomic ones, and a short list of traps that are genuinely language-specific.</p>
+
+  <h3>The landscape, if you aren't building one</h3>
+
+  <div class="tbl wide">
+    <table>
+      <thead><tr><th>Library</th><th>Model</th><th>Notes</th></tr></thead>
+      <tbody>
+        <tr><td>GMP</td><td>Integer, rational, float</td><td><code>mpz_class</code> and friends are a thin expression-template layer over the C API. The fastest thing there is. LGPL.</td></tr>
+        <tr><td>MPFR / MPC</td><td>Correctly-rounded float, complex</td><td>C API; <code>mpreal</code> is the usual C++ wrapper</td></tr>
+        <tr><td>Boost.Multiprecision</td><td>Facade</td><td><code>cpp_int</code>, <code>cpp_dec_float</code>, <code>cpp_bin_float</code> self-contained, or backends onto GMP/MPFR. Header-only, expression templates on by default</td></tr>
+        <tr><td>Arb / FLINT</td><td>Ball arithmetic</td><td>When you need certified digits</td></tr>
+        <tr><td>libmpdec</td><td>IEEE decimal</td><td>C; powers Python's <code>decimal</code></td></tr>
+        <tr><td>decNumber</td><td>IEEE decimal</td><td>IBM's reference implementation, in C</td></tr>
+        <tr><td>libtommath</td><td>Integer</td><td>Small, public domain, genuinely readable — the one to study</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <p>Boost's <code>cpp_int</code> with a fixed-size backend — <code>number&lt;cpp_int_backend&lt;256,256,unsigned_magnitude,unchecked,void&gt;&gt;</code> — is stack-allocated and often the right answer when you know the bound in advance.</p>
+
+  <h3>The structural decision: split the algorithms from the values</h3>
+
+  <p>This is GMP's <code>mpn</code>/<code>mpz</code> separation, and it is the one design choice worth copying wholesale. The algorithm layer works on <strong>borrowed limb ranges and never allocates</strong>:</p>
+
+<pre><code><span class="cmt">// Returns the carry out. dst may alias a or b.</span>
+uint64_t add( std::span&lt;uint64_t&gt; dst,
+              std::span&lt;const uint64_t&gt; a,
+              std::span&lt;const uint64_t&gt; b ) noexcept;
+
+<span class="cmt">// dst.size() &gt;= a.size() + b.size(); scratch from mul_scratch_size().</span>
+void mul( std::span&lt;uint64_t&gt; dst,
+          std::span&lt;const uint64_t&gt; a,
+          std::span&lt;const uint64_t&gt; b,
+          std::span&lt;uint64_t&gt; scratch ) noexcept;</code></pre>
+
+  <p>The value layer owns memory, handles signs, normalisation and growth, and calls into that. The payoff is that the hard, performance-critical code has no allocation, no exceptions, no ownership and no class invariants in it — you can fuzz it directly, and the recursive algorithms carve their temporaries out of one caller-supplied scratch buffer instead of allocating per level.</p>
+
+  <p><code>std::span</code> is what makes this pleasant. Before C++20 it was pointer-and-length pairs, which is why GMP's signatures look the way they do.</p>
+
+  <h3>Value semantics, and the move payoff</h3>
+
+  <p>The classic complaint about operator overloading for bignums is temporaries. C++11 largely fixed it, if the operators are written the right way:</p>
+
+<pre><code><span class="cmt">// Take by value, mutate, move out — the temporary's buffer is reused.</span>
+inline BigInt operator+( BigInt lhs, const BigInt &amp;rhs )
+{
+    lhs += rhs;
+    return lhs;              <span class="cmt">// NRVO or move, never a copy</span>
+}</code></pre>
+
+  <p>In <code>a = b + c + d</code> the first <code>+</code> allocates once and the second reuses that same buffer. That recovers most of what expression templates were invented for, at no cost in complexity.</p>
+
+  <p>Making the move constructor <code>noexcept</code> is not cosmetic — without it, <code>std::vector&lt;BigInt&gt;</code> copies on reallocation instead of moving:</p>
+
+<pre><code>BigInt( BigInt &amp;&amp;other ) noexcept;
+BigInt &amp;operator=( BigInt &amp;&amp;other ) noexcept;
+std::strong_ordering operator&lt;=&gt;( const BigInt &amp; ) const noexcept;</code></pre>
+
+  <p>Expression templates still earn their place in one case: fusing <code>a = b * c + d</code> into a single pass with no temporary at all. Boost does this, and it genuinely helps for small fixed-size backends. For heap-backed arbitrary sizes the gain over move semantics is modest, and the cost is that <code>auto x = a + b;</code> captures an expression node holding references to dead temporaries. The lower-effort alternative is to expose GMP-style three-operand functions and let hot code call those directly — <code>mul( dst, a, b )</code> creates no temporary to begin with.</p>
+
+  <h3>Small-buffer optimisation</h3>
+
+  <p>At the sizes people actually use, allocation dominates. A union between an inline array and a heap pointer removes it entirely for small values:</p>
+
+<pre><code>class BigInt {
+    static constexpr std::size_t kInlineLimbs = 3;   <span class="cmt">// 192 bits</span>
+    union {
+        uint64_t  m_inline[ kInlineLimbs ];
+        uint64_t *m_heap;
+    };
+    uint32_t m_size;        <span class="cmt">// limbs in use</span>
+    uint32_t m_capacity;    <span class="cmt">// &lt;= kInlineLimbs means inline</span>
+    bool     m_negative;
+};</code></pre>
+
+  <p>Note what it rules out: no stable pointers into the limbs across a move, and every accessor takes the inline/heap branch. Worth doing, but decide early — retrofitting means auditing every <code>data()</code> call.</p>
+
+  <p>If you would rather not, <code>std::vector&lt;uint64_t&gt;</code> is fine with one caveat: <code>resize()</code> value-initialises, so growing a working buffer zeroes memory you are about to overwrite. Either <code>reserve</code> and construct manually, or use a no-init allocator. And <code>std::pmr::monotonic_buffer_resource</code> is a natural fit for Karatsuba scratch — one stack buffer at the top of the recursion, allocations that are pointer bumps, nothing to free.</p>
+
+  <h3>The limb primitives</h3>
+
+  <p>Carry chains, portably. Compilers recognise this shape reasonably well:</p>
+
+<pre><code>inline uint64_t addc( uint64_t a, uint64_t b, uint64_t &amp;carry ) noexcept
+{
+    uint64_t s  = a + b;
+    uint64_t c1 = ( s &lt; a );
+    uint64_t t  = s + carry;
+    carry = c1 | ( t &lt; s );
+    return t;
+}</code></pre>
+
+  <p>Where they don't, <code>_addcarry_u64</code> (MSVC and Intel), <code>__builtin_addcll</code> (Clang) or the type-generic <code>__builtin_add_overflow</code> (GCC and Clang) get you the real ADC instruction. Wide multiply needs a platform split:</p>
+
+<pre><code>inline void mul_wide( uint64_t a, uint64_t b,
+                      uint64_t &amp;hi, uint64_t &amp;lo ) noexcept
+{
+#if defined( __SIZEOF_INT128__ )
+    unsigned __int128 p = (unsigned __int128)a * b;
+    lo = (uint64_t)p;  hi = (uint64_t)( p &gt;&gt; 64 );
+#elif defined( _MSC_VER ) &amp;&amp; defined( _M_X64 )
+    lo = _umul128( a, b, &amp;hi );
+#else
+    <span class="cmt">/* 32-bit split fallback */</span>
+#endif
+}</code></pre>
+
+  <p>For a <em>decimal</em> engine, base 10<sup>9</sup> in <code>uint32_t</code> with <code>uint64_t</code> intermediates needs none of this and is genuinely portable. Base 10<sup>18</sup> in <code>uint64_t</code> needs <code>__int128</code> plus a division-by-constant trick for the carry — which the compiler will do for you if the base is a literal constant, an argument for making it one rather than a runtime parameter.</p>
+
+  <h3>Error handling in an embeddable engine</h3>
+
+  <p>Three options, and mixing them is the failure mode. <strong>Exceptions</strong> are natural for <code>std::overflow_error</code> on divide-by-zero and <code>std::bad_alloc</code> on growth, but rule you out of <code>-fno-exceptions</code> hosts. <strong>Status returns</strong> from every operation make operators unusable. <strong>Sticky flags in a context object</strong> — the IEEE model, used by <code>decNumber</code> and Python's <code>decimal</code> — keep operators clean and let the caller check at a boundary of its own choosing, at the cost of a context parameter or a thread-local.</p>
+
+  <p>For a decimal engine specifically the flag model composes best, because the spec already defines the set: inexact, rounded, division-by-zero, overflow, underflow, invalid-operation. Callers arriving from other decimal libraries will expect exactly those.</p>
+
+  <h3>constexpr</h3>
+
+  <p>C++20 allows heap allocation during constant evaluation as long as it doesn't escape into the runtime object, so a <code>constexpr</code> bignum can compute a compile-time answer — but it cannot <em>be</em> a compile-time constant if it holds a pointer. For persistent compile-time values, back them with <code>std::array</code> at a fixed size. Marking the limb layer <code>constexpr</code> costs nothing and lets you write <code>static_assert</code> tests that run at build time.</p>
+
+  <h3>The traps that are specifically C++</h3>
+
+  <ul>
+    <li><strong>Shift by the full width is undefined.</strong> <code>x &gt;&gt; 64</code> on a <code>uint64_t</code> is UB — and it is exactly what a limb-shift loop computes when the shift amount is zero. Special-case it. This bug is close to universal in first drafts and shows on only one compiler.</li>
+    <li><strong>Signed overflow is UB</strong>, so limbs must be unsigned. Related: <code>uint16_t * uint16_t</code> integer-promotes to <code>int</code> and can overflow <em>signed</em> — a real hazard in BCD or 16-bit-limb designs.</li>
+    <li><strong>Aliasing.</strong> <code>a = a * a</code> and <code>mul( x, x, x )</code> must work. Either document that the destination may not alias and assert it, or always compute into scratch. Silent wrong answers otherwise.</li>
+    <li><strong>Self-assignment</strong> in <code>operator=</code>, when you free the old buffer first.</li>
+    <li><strong>Comparisons that allocate.</strong> <code>a &lt; b + 1</code> should not touch the heap. Provide small-integer overloads, or you pay for one in every loop condition.</li>
+    <li><strong>Header-only inlining that vanishes in debug builds</strong>, quietly moving your profile somewhere it will never be in release.</li>
+  </ul>
+
+  <h3>Testing</h3>
+
+  <p>The language-specific leverage here is that a differential oracle is cheap: link GMP into the test binary only, and property-test every operation against it over randomly sized random inputs, plus a boundary corpus — zero, one limb, limb boundaries ±1, powers of the base, values that carry all the way up. For a decimal engine, Python's <code>decimal</code> makes a good oracle over a pipe, since it implements the same spec.</p>
+
+  <p>Then run the same suite under <code>-fsanitize=address,undefined</code>. The shift-by-width and signed-overflow traps above are precisely what UBSan exists to catch, and they will not surface any other way.</p>
+
+  <!-- ============ PART III ============ -->
+  <div class="part" id="part3">
+    <span class="num">III</span>
+    <div><span class="kicker">The placement</span><h2>One engine, plotted against the axes</h2></div>
+  </div>
+
+  <p class="lede">A survey is easier to read against something concrete. Addaptic is an arbitrary-precision decimal arithmetic engine in C++, and it makes a set of choices that land it somewhere most libraries are not — which makes it a useful worked example of how the axes interact.</p>
+
+  <div class="tbl wide">
+    <table>
+      <thead><tr><th>Axis</th><th>The choice made</th></tr></thead>
+      <tbody>
+        <tr><td>Number model</td><td><strong>Scaled decimal</strong> — a digit array plus a tracked count of fractional digits. The <code>BigDecimal</code> / <code>decNumber</code> family</td></tr>
+        <tr><td>Radix</td><td><strong>Base-b digit array, one digit per machine word</strong> — and b is <em>runtime-variable</em>: any base from 2 to 16</td></tr>
+        <tr><td>Precision</td><td><strong>An ambient working precision</strong>, one per thread, widened and restored by the algorithms that need guard digits</td></tr>
+        <tr><td>Rounding</td><td>Twelve modes, half-even default — a <strong>superset</strong> of the IEEE decimal set — and <strong>every answer correctly rounded</strong></td></tr>
+        <tr><td>Error model</td><td><strong>IEEE-style sticky flags</strong> — zero, infinity, quiet and signalling NaN, divide-by-zero — that propagate through everything downstream of the failure</td></tr>
+        <tr><td>Multiplication</td><td>Schoolbook — a digit at a time for the smallest products, on <strong>packed limbs</strong> past them → <strong>Karatsuba</strong> on those limbs → a number-theoretic transform</td></tr>
+        <tr><td>Division</td><td><strong>Long division on packed limbs</strong>, rounded through a sticky digit → for a long divisor, <strong>a Newton reciprocal and a product</strong></td></tr>
+        <tr><td>C++ style</td><td><strong>Three-operand free functions over an owning class</strong> — the GMP <code>mpz_</code> idiom rather than the Boost one</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>It is a BigDecimal, not a bignum</h3>
+
+  <p>The scale is held as a count of fractional digits, taken from the right. That is exactly the unscaled-value-plus-scale representation of Java's <code>BigDecimal</code>, Python's <code>decimal</code> and IBM's <code>decNumber</code> — a decimal floating-point number whose exponent happens to be stored as a negated digit count. Not a big integer, not a rational, not an exact real, not a ball.</p>
+
+  <p>So the third and fifth families from Part I are out of scope by design, and correctly so. You do not want lazy reals or exploding denominators in a calculator engine.</p>
+
+  <h3>Two choices that are genuinely unusual</h3>
+
+  <p><strong>A decimal engine with a complete transcendental library.</strong> This combination barely exists. <code>decNumber</code> and <code>BigDecimal</code> give you arithmetic and stop. Python's <code>decimal</code> adds <code>exp</code>, <code>ln</code>, <code>log10</code>, <code>sqrt</code> and <code>power</code> — five functions, and the documentation is explicit that it stops there. Everything carrying the full trigonometric, inverse, hyperbolic and gamma set — MPFR, mpmath, Arb — is <strong>binary</strong>. Addaptic has that set in base ten, every function of it correctly rounded, which puts it in a niche I cannot name another occupant of.</p>
+
+  <p><strong>A runtime-variable base.</strong> Practically every engine fixes its radix at compile time. Addaptic carries the base per number — any base from two to sixteen — with live conversion between them, derives its rounding thresholds from the base so that rounding is base-generic, and converts a mixed-base pair into the left operand's base before operating on it, rather than silently reading one value's digits as though they were the other's. Base twelve as a first-class option is something I have not seen elsewhere at all, and the odd bases are harder still: an odd base has no half digit, so a half never terminates there — 0.333… in base seven — and every rounding decision has to be made without one.</p>
+
+  <p>Both choices cost the packed-limb representation <em>as a stored form</em>. A number addressable digit by digit, in a base that can change under it, cannot also be limbs of 10<sup>9</sup>: base conversion, rounding at a digit position and every digit-level accessor would have to unpack first. What they do not cost is packing <em>inside</em> an operation, where the base has only to be respected at the boundaries — this engine's long division, its multiplication — schoolbook and Karatsuba — and its transform tier all pack several base-<em>b</em> digits into each element, in every base, base twelve and the odd bases included, and unpack on the way out. Base twelve does give up the shift-and-mask convenience of a power-of-two limb, but so does base ten; dividing by the limb radix costs a multiply. That is a coherent trade — but it is worth naming what it buys and what it spends.</p>
+
+  <h3>What one digit per word actually costs</h3>
+
+  <p>Eight bytes holding a value from zero to nine. Against a packed 10<sup>9</sup>-per-<code>uint32</code> scheme that is roughly <strong>ten times the memory and nine times the iterations</strong> in every linear operation — which is the figure below.</p>
+
+  <figure class="wide">
+    <svg viewBox="0 0 900 270" role="img" aria-label="The value 1234567890 stored two ways: ten boxes each holding one decimal digit in an eight-byte long, totalling eighty bytes; and two boxes holding packed base-ten-to-the-ninth limbs, totalling eight bytes.">
+      <defs>
+        <marker id="ar2" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+          <polygon points="0,1 8,4 0,7" fill="currentColor"></polygon>
+        </marker>
+      </defs>
+
+      <text x="20" y="26" font-family="IBM Plex Sans, sans-serif" font-size="12" font-weight="600" fill="currentColor">THE VALUE 1234567890, HELD TWO WAYS</text>
+
+      <text x="20" y="66" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="#186356" font-weight="600">Digit array</text>
+      <text x="20" y="82" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.75">one long per digit</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="15" text-anchor="middle">
+        <rect x="150" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="173" y="79" fill="currentColor">0</text>
+        <rect x="200" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="223" y="79" fill="currentColor">9</text>
+        <rect x="250" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="273" y="79" fill="currentColor">8</text>
+        <rect x="300" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="323" y="79" fill="currentColor">7</text>
+        <rect x="350" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="373" y="79" fill="currentColor">6</text>
+        <rect x="400" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="423" y="79" fill="currentColor">5</text>
+        <rect x="450" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="473" y="79" fill="currentColor">4</text>
+        <rect x="500" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="523" y="79" fill="currentColor">3</text>
+        <rect x="550" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="573" y="79" fill="currentColor">2</text>
+        <rect x="600" y="52" width="46" height="42" fill="#186356" fill-opacity="0.10" stroke="#186356" stroke-width="1.3"></rect><text x="623" y="79" fill="currentColor">1</text>
+      </g>
+      <text x="672" y="79" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="#186356">80 bytes</text>
+      <line x1="150" y1="108" x2="240" y2="108" stroke="currentColor" stroke-width="1" marker-end="url(#ar2)" opacity="0.7"></line>
+      <text x="248" y="112" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.7">least significant first · 8 bytes holding a value 0–9</text>
+
+      <text x="20" y="178" font-family="IBM Plex Sans, sans-serif" font-size="11.5" fill="currentColor" font-weight="600">Packed limbs</text>
+      <text x="20" y="194" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.75">uint32_t, base 10^9</text>
+      <g font-family="IBM Plex Mono, monospace" font-size="15" text-anchor="middle">
+        <rect x="150" y="164" width="146" height="42" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-width="1.2"></rect><text x="223" y="191" fill="currentColor">234567890</text>
+        <rect x="300" y="164" width="146" height="42" fill="currentColor" fill-opacity="0.08" stroke="currentColor" stroke-width="1.2"></rect><text x="373" y="191" fill="currentColor">1</text>
+      </g>
+      <text x="466" y="191" font-family="IBM Plex Sans, sans-serif" font-size="12.5" font-weight="600" fill="currentColor">8 bytes</text>
+      <text x="150" y="232" font-family="IBM Plex Sans, sans-serif" font-size="10.5" fill="currentColor" opacity="0.7">nine digits per element · one loop iteration instead of nine</text>
+
+      <line x1="20" y1="252" x2="880" y2="252" stroke="currentColor" stroke-width="1" opacity="0.25"></line>
+      <text x="20" y="266" font-family="IBM Plex Sans, sans-serif" font-size="11" fill="currentColor" opacity="0.8">10× the memory · ~9× the iterations in every linear operation</text>
+    </svg>
+    <figcaption><b>What the representation charges.</b> Add, subtract, compare, shift and trim still walk one digit per iteration where a packed engine walks nine. The long operations sidestep it by packing inside the operation — long division and the schoolbook and Karatsuba multiplications into limbs below 2<sup>32</sup>, the transform into its own elements — precisely because one digit per word would waste the field.</figcaption>
+  </figure>
+
+  <p>The consequence that is easy to miss is what it does to the thresholds. A Karatsuba crossover around thirty <em>elements</em> is completely normal; GMP's is in the same range. But thirty elements here is thirty decimal digits, where thirty limbs in GMP is about 580 decimal digits. So a digit-array engine reaches for Karatsuba at values a packed engine is still handling in two limbs of schoolbook. The ladder is correctly built — it simply starts much lower down the value range than the same numbers would suggest elsewhere.</p>
+
+  <p>This engine did exactly that until it began packing inside its multiplication and division. Its packed schoolbook then outran its digit-level Karatsuba at every size up to where its transform takes over, and the Karatsuba was removed: a split whose additions still go a digit at a time costs more than the products it saves. It came back splitting the packed limbs instead, where a carry is a comparison rather than a division, and now takes over at under a hundred limbs — some 850 digits in base ten, close to where a packed binary engine climbs the same rung. It is quick enough there that the transform above it now waits, for operands of similar length, until past a hundred thousand digits in every base — about four times further out, in base ten, than it began. Finding where showed the crossing to be a staircase rather than a point: a transform's cost is flat between power-of-two lengths and doubles at each, so just past every step Karatsuba wins again.</p>
+
+  <h3>The rest of the ladder</h3>
+
+  <p>Part I's other rungs are climbed too, each from a crossover measured for every base:</p>
+
+  <ul>
+    <li><strong>Division</strong> takes Newton's reciprocal and one product when the divisor is long, chosen by the lengths of both the quotient and the divisor.</li>
+    <li><strong>The exponential, sine and cosine</strong> go by <strong>binary splitting</strong> from a few hundred digits, the tangent and cotangent from one run of it.</li>
+    <li><strong>The logarithm</strong> goes by Newton on the exponential, and by the <strong>AGM</strong> — in most bases from under a hundred digits — once its constants are on hand.</li>
+    <li><strong>The inverse circular functions</strong> go by Newton on the sine and cosine.</li>
+    <li><strong>The square root</strong> uses the AGM's own core — Newton on the reciprocal root, multiplications only — and the <strong>cube root</strong> goes by its reciprocal, both climbing through widths that double.</li>
+    <li><strong>Base conversion</strong> goes by products past a crossover, writing the value in the new base by halves joined with one product — the divide-and-conquer Part I calls the cost people forget, and hundreds of times faster than the quadratic loops it replaced, at ten thousand places.</li>
+  </ul>
+
+  <h3>How it rounds</h3>
+
+  <p><strong>Every answer is correctly rounded</strong> at the working precision, in its own base and rounding mode — Part I's strongest guarantee, reached by nearly the same route as MPFR. Each function works past its answer with guard digits sized for it. When the final rounding lands within a hair of a half, the function is worked again wider, the extra width doubling each round until the answer is clear of it: Ziv's strategy. A value exactly on a half never clears, however wide the retry, so wherever one can arise — roots, powers to a fraction, logarithms that are fractions — it is decided exactly, with whole numbers.</p>
+
+  <p>The one difference is a cap. The retry stops at one more answer's width of digits, and a true value nearer a half than that is rounded as the widest attempt stands — rare in ordinary use, though such values can be built on purpose. An audit against an independent decimal implementation, across eighty orders of magnitude and run under sanitizers on every change, checks the result rather than asserting it.</p>
+
+  <h3>What the placement is worth</h3>
+
+  <p>Reading an engine against the axes is more useful than benchmarking it, because it tells you what the engine is <em>for</em>. This one is not competing with GMP and would lose if it tried; the packed representation and the assembly cores are not recoverable from a base-generic decimal design. What it has instead is the thing GMP does not: exact decimal behaviour, a base the caller chooses at runtime, and a function library that goes all the way up to gamma, correctly rounded, without ever leaving base ten.</p>
+
+  <p>That is the general lesson, and it survives the specific example. <strong>The axes are not a scorecard.</strong> Nothing sits well on all of them at once, and an engine that looks compromised on one axis is usually paying for a position on another that its callers actually need.</p>
+
+  <div class="verdict">
+    <h4>The short version</h4>
+    <p>Six choices define an arbitrary-precision engine: what kind of number, what radix, who owns the precision, how it rounds, how far up the algorithm ladder it climbs, and what it does when an operation has no answer.</p>
+    <p>Read a library against those six before you read its benchmarks. The numbers tell you how fast it is at what it does; only the axes tell you whether that is the thing you need done.</p>
+  </div>
+
+  <footer>
+    <p>Parts I and II are a general survey of arbitrary-precision arithmetic and its implementation in C++. Part III describes the design of Addaptic, an arbitrary-precision decimal arithmetic engine, as a worked example of the axes in combination.</p>
+    <p>Addaptic is © 2000–2026 Krasche &amp; Byrne LLC.</p>
+  </footer>
+
+</article>
