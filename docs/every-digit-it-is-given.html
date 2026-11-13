@@ -596,7 +596,7 @@ std::strong_ordering operator&lt;=&gt;( const BigInt &amp; ) const noexcept;</co
     <div><span class="kicker">The placement</span><h2>One engine, plotted against the axes</h2></div>
   </div>
 
-  <p class="lede">A survey is easier to read against something concrete. Addaptic is an arbitrary-precision decimal arithmetic engine in C++, and it makes a set of choices that land it somewhere most libraries are not — which makes it a useful worked example of how the axes interact.</p>
+  <p class="lede">A survey is easier to read against something concrete. Addaptic is an arbitrary-precision math library for C++, and it makes a set of choices that land it somewhere most libraries are not — which makes it a useful worked example of how the axes interact.</p>
 
   <div class="tbl wide">
     <table>
@@ -622,7 +622,7 @@ std::strong_ordering operator&lt;=&gt;( const BigInt &amp; ) const noexcept;</co
 
   <h3>Two choices that are genuinely unusual</h3>
 
-  <p><strong>A decimal engine with a complete transcendental library.</strong> This combination barely exists. <code>decNumber</code> and <code>BigDecimal</code> give you arithmetic and stop. Python's <code>decimal</code> adds <code>exp</code>, <code>ln</code>, <code>log10</code>, <code>sqrt</code> and <code>power</code> — five functions, and the documentation is explicit that it stops there. Everything carrying the full trigonometric, inverse, hyperbolic and gamma set — MPFR, mpmath, Arb — is <strong>binary</strong>. Addaptic has that set in base ten, every function of it correctly rounded, which puts it in a niche I cannot name another occupant of.</p>
+  <p><strong>A complete transcendental library outside base two.</strong> This combination barely exists. <code>decNumber</code> and <code>BigDecimal</code> give you arithmetic and stop. Python's <code>decimal</code> adds <code>exp</code>, <code>ln</code>, <code>log10</code>, <code>sqrt</code> and <code>power</code> — five functions, and the documentation is explicit that it stops there. Everything carrying the full trigonometric, inverse, hyperbolic and gamma set — MPFR, mpmath, Arb — is <strong>binary</strong>. Addaptic has that set in base ten, and in every other base from two to sixteen, every function of it correctly rounded, which puts it in a niche I cannot name another occupant of.</p>
 
   <p><strong>A runtime-variable base.</strong> Practically every engine fixes its radix at compile time. Addaptic carries the base per number — any base from two to sixteen — with live conversion between them, derives its rounding thresholds from the base so that rounding is base-generic, and converts a mixed-base pair into the left operand's base before operating on it, rather than silently reading one value's digits as though they were the other's. Base twelve as a first-class option is something I have not seen elsewhere at all, and the odd bases are harder still: an odd base has no half digit, so a half never terminates there — 0.333… in base seven — and every rounding decision has to be made without one.</p>
 
@@ -711,7 +711,7 @@ std::strong_ordering operator&lt;=&gt;( const BigInt &amp; ) const noexcept;</co
   </div>
 
   <footer>
-    <p>Parts I and II are a general survey of arbitrary-precision arithmetic and its implementation in C++. Part III describes the design of Addaptic, an arbitrary-precision decimal arithmetic engine, as a worked example of the axes in combination.</p>
+    <p>Parts I and II are a general survey of arbitrary-precision arithmetic and its implementation in C++. Part III describes the design of Addaptic, an arbitrary-precision math library, as a worked example of the axes in combination.</p>
     <p>Addaptic is © 2000–2026 Krasche &amp; Byrne LLC.</p>
   </footer>
 

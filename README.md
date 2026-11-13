@@ -1,6 +1,6 @@
 # Addaptic
 
-**An arbitrary-precision decimal arithmetic engine in C++.**
+**An arbitrary-precision math library for C++.**
 
 Copyright (c) 2000-2026 by Krasche & Byrne LLC. Released under the MIT License;
 see [LICENSE](LICENSE).
