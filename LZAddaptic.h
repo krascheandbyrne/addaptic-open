@@ -32,15 +32,20 @@
 
 /////////////////////////////////////////////////////////////////
 //  Addaptic version constants
+//
+//  Numbered by semantic versioning: the major number moves for a
+//  change that can break a caller, the minor for something added,
+//  and the release for a fix. A fix may change an answer -- one that
+//  was not correctly rounded becoming one that is -- and is still a
+//  fix. CMakeLists.txt gives the same number as the project's
+//  version, and stops if the two disagree.
 /////////////////////////////////////////////////////////////////
 
-const double	kAddapticVersionNumber = 3.01;
+constexpr long		kAddapticVersionMajor = 1;
+constexpr long		kAddapticVersionMinor = 0;
+constexpr long		kAddapticVersionRelease = 0;
 
-const long		kAddapticVersionMajor = 3;
-const long		kAddapticVersionMinor = 0;
-const long		kAddapticVersionRelease = 1;
-
-const char		kAddapticVersionString[] = "3.0.1";
+constexpr char		kAddapticVersionString[] = "1.0.0";
 
 
 /////////////////////////////////////////////////////////////////

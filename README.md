@@ -279,6 +279,19 @@ The bench reaches only part of the library; `lz_factorial`, `lz_combinations`,
 `lz_agm` and the means of a list are callable from code but have no key bound
 to them.
 
+## Versions
+
+This is Addaptic **1.0.0**, its first numbered release. Releases are numbered
+by [semantic versioning](https://semver.org): the major number moves for a
+change that can break a caller, the minor for something added, and the last
+for a fix. A fix may change an answer, one that was not correctly rounded
+becoming one that is. `LZAddaptic.h` gives the version as
+`kAddapticVersionString`, and as the numbers `kAddapticVersionMajor`,
+`kAddapticVersionMinor` and `kAddapticVersionRelease`; `CMakeLists.txt` gives
+it as the project's version, and stops if the two disagree. Each release is
+tagged, and listed under
+[Releases](https://github.com/krascheandbyrne/addaptic-open/releases).
+
 ## Building
 
 ```bash
@@ -304,7 +317,7 @@ C++17, no external dependencies. Three translation units:
 | `Addaptic.cpp` | the console bench |
 | `LZMath.{h,cpp}` | the math API and its high-precision constants |
 | `LZNumber.{h,cpp}` | `CLZNumber` — representation, storage, rounding, base conversion |
-| `LZAddaptic.h` | build configuration |
+| `LZAddaptic.h` | the version, error codes and build configuration |
 
 The test programs beside them — `AddapticTests.cpp`, `AddapticSweep.cpp`,
 `AddapticThreads.cpp` and the audit's `auditrounding.cpp` — are described

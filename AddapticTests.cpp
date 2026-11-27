@@ -701,6 +701,19 @@ static void Set( CLZNumber& theNumber, const char* szValue )
 //	Exact arithmetic - the digit primitives must not approximate
 /////////////////////////////////////////////////////////////////
 
+static void TestVersion()
+{
+	Banner( "The version" );
+
+	// The string a host shows and the numbers it compares must be the
+	// same release.
+	char	szFromNumbers[ 64 ];
+	::snprintf( szFromNumbers, sizeof( szFromNumbers ), "%ld.%ld.%ld",
+		kAddapticVersionMajor, kAddapticVersionMinor, kAddapticVersionRelease );
+
+	CheckTrue( "the version string", ::strcmp( szFromNumbers, kAddapticVersionString ) == 0, kAddapticVersionString );
+}
+
 static void TestExactArithmetic()
 {
 	CLZNumber	a, b, result;
@@ -24853,9 +24866,10 @@ int main()
 {
 	lzu_setup();
 
-	printf( "Addaptic accuracy and precision tests\n" );
+	printf( "Addaptic %s accuracy and precision tests\n", kAddapticVersionString );
 	printf( "=====================================\n" );
 
+	TestVersion();
 	TestExactArithmetic();
 	TestDivisionExact();
 	TestDivisionAccuracy();

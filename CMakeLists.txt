@@ -1,5 +1,13 @@
 cmake_minimum_required(VERSION 3.24)
-project(Addaptic)
+project(Addaptic VERSION 1.0.0)
+
+# The version is stated twice, here and in LZAddaptic.h, which a
+# program reads; the two must agree.
+file(STRINGS LZAddaptic.h ADDAPTIC_HEADER_VERSION REGEX "kAddapticVersionString")
+string(REGEX MATCH "[0-9]+\\.[0-9]+\\.[0-9]+" ADDAPTIC_HEADER_VERSION "${ADDAPTIC_HEADER_VERSION}")
+if(NOT ADDAPTIC_HEADER_VERSION STREQUAL PROJECT_VERSION)
+    message(FATAL_ERROR "CMakeLists.txt says version ${PROJECT_VERSION}, LZAddaptic.h says ${ADDAPTIC_HEADER_VERSION}")
+endif()
 
 set(CMAKE_CXX_STANDARD 17)
 
